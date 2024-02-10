@@ -6,20 +6,6 @@ import express from "express";
 
 const app = express();
 const prisma = new PrismaClient();
-// async function main() {
-//   // ... you will write your Prisma Client queries here
-//   //   console.log("ABHAY");
-//   //   await prisma.fixedExpenses.create({
-//   //     data: {
-//   //       montlyRent: 12500,
-//   //       travel: 3000,
-//   //       cook: 2000,
-//   //       househelp: 1000,
-//   //       wifi: 1000,
-//   //       moneySentHome: 10000,
-//   //     },
-//   //   });
-// }
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -91,6 +77,7 @@ app.get("/get-monthly-chart", async (req: Request, res: Response) => {
   let totalMonthExpense = 0;
 
   const currentMonth = new Date().getMonth();
+  console.log(currentMonth);
   allExpenses.forEach((expense) => {
     const currDateMonth = new Date(expense.date).getMonth();
     const currDateDay = new Date(expense.date).getDate();
@@ -111,6 +98,32 @@ app.get("/get-monthly-chart", async (req: Request, res: Response) => {
     status: 200,
     monthlyChart: currentMonthChart,
     totalMonthExpense,
+  });
+});
+app.get("/get-yearly-chart", async (req: Request, res: Response) => {
+  const allExpenses = await prisma.dailyExpense.findMany({});
+  const yearChart: any = {};
+  for (let month = 0; month < 12; month++) {
+    let totalMonthExpense = 0;
+    allExpenses.forEach((expense) => {
+      const currDateMonth = new Date(expense.date).getMonth();
+      // console.log(currDateMonth, currentMonth);
+      if (currDateMonth == month) {
+        if (!yearChart[month]) {
+          yearChart[month] = {
+            total: 0,
+            name: month,
+          };
+        }
+        totalMonthExpense += expense.amount;
+        yearChart[month].total += expense.amount;
+      }
+    });
+  }
+  console.log(yearChart);
+  return res.json({
+    status: 200,
+    yearlyChart: yearChart,
   });
 });
 const PORT = 8000;
